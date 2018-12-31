@@ -2,7 +2,7 @@
 
 All:
 	@echo "----------Building project:[ libS3ORAM - Debug ]----------"
-	@cd "S3ORAM" && "$(MAKE)" -f  "libS3ORAM.mk"
+	@cd "libS3ORAM" && "$(MAKE)" -f  "libS3ORAM.mk"
 clean:
 	@echo "----------Cleaning project:[ libS3ORAM - Debug ]----------"
-	@cd "S3ORAM" && "$(MAKE)" -f  "libS3ORAM.mk" clean
+	@cd "libS3ORAM" && "$(MAKE)" -f  "libS3ORAM.mk" clean
