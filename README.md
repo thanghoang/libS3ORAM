@@ -7,7 +7,7 @@ This project is built on CodeLite IDE (link: http://codelite.org). It is recomme
 
 ## Updates
 
-* 2018-12-30: S3ORAM now has a new scheme thats leverage the eviction paradigm in Circuit-ORAM. S3ORAM now also supports k-ary tree layout.
+* 2018-12-30: S3ORAM now has a new scheme that leverages the eviction paradigm in Circuit-ORAM. S3ORAM now also supports k-ary tree layout.
 * 2017-12-25: S3ORAM now supports more than 3 servers with higher privacy levels.
 
 
