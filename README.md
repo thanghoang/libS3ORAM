@@ -1,5 +1,9 @@
 # libS3ORAM
-Implementation of libS3ORAM framework, an extension of S3ORAM psprt in CCS'17 that supports k-ary tree and Circuit-ORAM layout. The full paper is currently under review, which will be available soon. This project is built on CodeLite IDE (link: http://codelite.org). It is recommended to install CodeLite to load the full libS3ORAM workspace. 
+Implementation of libS3ORAM framework, an extension of S3ORAM scheme in CCS'17 that supports k-ary tree and Circuit-ORAM layout. The full paper is currently under review, which will be available soon. 
+
+This repository is just open for review purpose. We will merge this with our original S3ORAM repo (http://github.com/thanghoang/S3ORAM) soon!
+
+This project is built on CodeLite IDE (link: http://codelite.org). It is recommended to install CodeLite to load the full libS3ORAM workspace. 
 
 ## Updates
 
@@ -9,7 +13,7 @@ Implementation of libS3ORAM framework, an extension of S3ORAM psprt in CCS'17 th
 
 # Required Libraries
 1. NTL v9.10.0 (download link: http://www.shoup.net/ntl/download.html)
-
+psprt
 2. ZeroMQ (download link: http://zeromq.org/intro:get-the-software)
 
 # Configuration
