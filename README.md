@@ -1,7 +1,7 @@
 # libS3ORAM
 Implementation of libS3ORAM framework, an extension of S3ORAM scheme in CCS'17 that supports k-ary tree and Circuit-ORAM layout. The full paper is currently under review, which will be available soon. 
 
-This repository is just open for review purpose. We will merge this with our original S3ORAM repo (http://github.com/thanghoang/S3ORAM) soon!
+This repository is just open for review purpose. We will merge this with our original S3ORAM repo (http://github.com/thanghoang/S3ORAM) after the review is complete! The code is not fully well-organized, we will update it soon.
 
 This project is built on CodeLite IDE (link: http://codelite.org). It is recommended to install CodeLite to load the full libS3ORAM workspace. 
 
