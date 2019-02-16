@@ -38,7 +38,7 @@ static inline std::string to_string(T value)
 static const unsigned long long P = 1073742353; //prime field - should have length equal to the defined TYPE_DATA
 
 
-//#define CORAM_LAYOUT
+#define CORAM_LAYOUT
 //#define TRIPLET_EVICTION
 #define K_ARY 3
 

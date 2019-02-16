@@ -12,148 +12,105 @@
 #include "struct_thread_loadData.h"
 
 
-unsigned long int ServerKaryS3ORAMC::server_logs[13];
-unsigned long int ServerKaryS3ORAMC::thread_max = 0;
 
-
-zmq::context_t** ServerKaryS3ORAMC::context_send = new zmq::context_t*[NUM_SERVERS-1];
-zmq::socket_t**  ServerKaryS3ORAMC::socket_send = new zmq::socket_t*[NUM_SERVERS-1];
-    
-
-zmq::context_t** ServerKaryS3ORAMC::context_recv = new zmq::context_t*[NUM_SERVERS-1];
-zmq::socket_t** ServerKaryS3ORAMC::socket_recv = new zmq::socket_t*[NUM_SERVERS-1];
-char ServerKaryS3ORAMC::timestamp[16];
-
-ServerKaryS3ORAMC::ServerKaryS3ORAMC(TYPE_INDEX serverNo, int selectedThreads) 
+ServerKaryS3ORAMC::ServerKaryS3ORAMC(TYPE_INDEX serverNo, int selectedThreads) : ServerS3ORAM(serverNo,selectedThreads)
 {
 	
     //specific
+    delete[] this->evict_buffer_in;
+    
+    for (TYPE_INDEX k = 0 ; k < NUM_SERVERS-1; k++)
+	{
+		delete[] this->shares_buffer_in[k];
+        delete[] this->shares_buffer_out[k];
+	}
+    delete[] bucket_buffer;
+
+	for(TYPE_INDEX y = 0 ; y < H+1; y++)
+	{
+		for(TYPE_INDEX i = 0 ; i < BUCKET_SIZE; i++)
+		{
+			delete[] this->evictMatrix[y][i];
+		}
+        delete[] this->evictMatrix[y];	
+	}
+    delete[] this->evictMatrix;    
+	
+	for(TYPE_INDEX i = 0 ; i < NUM_SERVERS ;  i++)
+	{
+		for(TYPE_INDEX ii = 0 ; ii < DATA_CHUNKS ;  ii++)
+		{
+			delete[] this->ownShares[i][ii];
+		}
+        delete[] this->ownShares[i];
+	}
+    delete[] this->ownShares; 
+	
+    for (TYPE_INDEX k = 0 ; k < DATA_CHUNKS; k++)
+	{
+		delete[] this->cross_product_vector[k];
+	}
+    delete[] this->cross_product_vector;
+    
+
     this->evict_buffer_in = new unsigned char[  2 * ((sizeof(TYPE_DATA) * DATA_CHUNKS) + 
                                                 (H+1)*evictMatSize*sizeof(TYPE_DATA) ) + 
                                                 sizeof(TYPE_INDEX)];
-        
-    this->shares_buffer_in = new unsigned char*[NUM_SERVERS-1];
+   
 	for (TYPE_INDEX k = 0 ; k < NUM_SERVERS-1; k++)
 	{
 		this->shares_buffer_in[k] = new unsigned char[2 * ((BUCKET_SIZE+1)*sizeof(TYPE_DATA)*DATA_CHUNKS)];
-	}
+        this->shares_buffer_out[k] = new unsigned char[2*((BUCKET_SIZE+1)*sizeof(TYPE_DATA)*DATA_CHUNKS)];
+    }
 
-	this->shares_buffer_out = new unsigned char*[NUM_SERVERS-1];
-	for (TYPE_INDEX k = 0 ; k < NUM_SERVERS-1; k++)
-	{
-		this->shares_buffer_out[k] = new unsigned char[2*((BUCKET_SIZE+1)*sizeof(TYPE_DATA)*DATA_CHUNKS)];
-	}
-    
-    
+	
     bucket_buffer = new unsigned char[(BUCKET_SIZE+1)*sizeof(TYPE_DATA)*DATA_CHUNKS];
    
    
-    this->cross_product_vector = new zz_p**[2];
-    this->evictMatrix = new zz_p***[2];
-    this->ownShares = new TYPE_DATA***[2];
-    this->BUCKET_DATA = new TYPE_DATA**[2];
-    this->thread_compute = new pthread_t*[2];
+	
+    
+   
+    this->cross_product_vector_coram = new zz_p**[2];
+    this->evictMatrix_coram = new zz_p***[2];
+    this->ownShares_coram = new TYPE_DATA***[2];
+    this->BUCKET_DATA_coram = new TYPE_DATA**[2];
+    this->thread_compute_coram = new pthread_t*[2];
 
     for(int e = 0 ; e < 2; e++)
     {
-        this->cross_product_vector[e] = new zz_p*[DATA_CHUNKS];
+        this->cross_product_vector_coram[e] = new zz_p*[DATA_CHUNKS];
         for (TYPE_INDEX k = 0 ; k < DATA_CHUNKS; k++)
         {
-            this->cross_product_vector[e][k]  = new zz_p[BUCKET_SIZE+1];	
+            this->cross_product_vector_coram[e][k]  = new zz_p[BUCKET_SIZE+1];	
         }
-        this->evictMatrix[e] = new zz_p**[H+1];
+        this->evictMatrix_coram[e] = new zz_p**[H+1];
         for(TYPE_INDEX y = 0 ; y < H+1; y++)
         {
-            this->evictMatrix[e][y] = new zz_p*[BUCKET_SIZE+1];
+            this->evictMatrix_coram[e][y] = new zz_p*[BUCKET_SIZE+1];
             for(TYPE_INDEX i = 0 ; i < BUCKET_SIZE+1; i++)
             {
-                this->evictMatrix[e][y][i] = new zz_p[BUCKET_SIZE+1];
+                this->evictMatrix_coram[e][y][i] = new zz_p[BUCKET_SIZE+1];
             }
             
         }
-        this->ownShares[e] = new TYPE_DATA**[NUM_SERVERS];
+        this->ownShares_coram[e] = new TYPE_DATA**[NUM_SERVERS];
         for(TYPE_INDEX i = 0 ; i < NUM_SERVERS ;  i++)
         {
-            this->ownShares[e][i] = new TYPE_DATA*[DATA_CHUNKS];
+            this->ownShares_coram[e][i] = new TYPE_DATA*[DATA_CHUNKS];
             for(TYPE_INDEX ii = 0 ; ii < DATA_CHUNKS ;  ii++)
             {
-                this->ownShares[e][i][ii] = new TYPE_DATA[BUCKET_SIZE+1];
+                this->ownShares_coram[e][i][ii] = new TYPE_DATA[BUCKET_SIZE+1];
             }
         }
-        this->BUCKET_DATA[e] = new TYPE_DATA*[DATA_CHUNKS];
+        this->BUCKET_DATA_coram[e] = new TYPE_DATA*[DATA_CHUNKS];
         for (TYPE_INDEX y = 0 ; y < DATA_CHUNKS ; y++)
         {
-            this->BUCKET_DATA[e][y] = new TYPE_DATA[BUCKET_SIZE+1];
+            this->BUCKET_DATA_coram[e][y] = new TYPE_DATA[BUCKET_SIZE+1];
         }
     
-        this->thread_compute[e] = new pthread_t[numThreads];
+        this->thread_compute_coram[e] = new pthread_t[numThreads];
     }	
 	
-
-    //specific for S3ORAM
-    //this->block_buffer_in = new unsigned char[sizeof(TYPE_DATA)*DATA_CHUNKS+ sizeof(TYPE_INDEX)];
-    
-    
-    //inherent
-	this->CLIENT_ADDR = "tcp://*:" + std::to_string(SERVER_PORT+(serverNo)*NUM_SERVERS+serverNo);
-    
-    this->numThreads = selectedThreads;
-    
-	cout<<endl;
-	cout << "=================================================================" << endl;
-	cout<< "Starting Server-" << serverNo+1 <<endl;
-	cout << "=================================================================" << endl;
-	this->serverNo = serverNo;
-	
-	TYPE_INDEX m = 0;
-	for (TYPE_INDEX k = 0 ; k < NUM_SERVERS; k++)
-	{
-		if(k != serverNo)
-		{
-			this->others[m] = k;
-			m++;
-		}
-	}
-    sumBlock = new TYPE_DATA[DATA_CHUNKS];
-	
-	this->select_buffer_in = new unsigned char[sizeof(TYPE_INDEX)+(H+1)*BUCKET_SIZE*sizeof(TYPE_DATA)];
-	this->block_buffer_out = new unsigned char[sizeof(TYPE_DATA)*DATA_CHUNKS];
-
-	
-	this->dot_product_vector = new zz_p*[DATA_CHUNKS];
-	for (TYPE_INDEX k = 0 ; k < DATA_CHUNKS; k++)
-	{
-		this->dot_product_vector[k] = new zz_p[BUCKET_SIZE*(H+1)];
-	}
-	
-	
-	time_t rawtime = time(0);
-	tm *now = localtime(&rawtime);
-
-	if(rawtime != -1)
-		strftime(timestamp,16,"%d%m_%H%M",now);
-        
-    //socket
-
-    
-    for(int i = 0 ; i < NUM_SERVERS-1;i ++)
-    {
-        context_send[i] = new zmq::context_t(1);
-        socket_send[i] = new zmq::socket_t(*context_send[i],ZMQ_REQ);
-        string send_address = SERVER_ADDR[this->others[i]] + ":" + std::to_string(SERVER_PORT+this->others[i]*NUM_SERVERS+this->serverNo);
-        cout<<"Opening "<<send_address<<" for sending...";
-        socket_send[i]->connect(send_address);
-        cout<<"OK!"<<endl;
-                
-        context_recv[i] = new zmq::context_t(2);
-        socket_recv[i] = new zmq::socket_t(*context_recv[i],ZMQ_REP);
-        string recv_address = "tcp://*:" + std::to_string(SERVER_PORT+(serverNo)*(NUM_SERVERS)+this->others[i]);
-        cout<<"Opening "<<recv_address<<" for listening...";
-        socket_recv[i]->bind(recv_address);
-        cout<<"OK!"<<endl;
-        
-    }
-   
     	
 }
 
@@ -165,113 +122,6 @@ ServerKaryS3ORAMC::~ServerKaryS3ORAMC()
 {
 }
 
-
-/**
- * Function Name: start
- *
- * Description: Starts the server to wait for a command from the client. 
- * According to the command, server performs certain subroutines for distributed ORAM operations.
- * 
- * @return 0 if successful
- */ 
-int ServerKaryS3ORAMC::start()
-{
-	int ret = 1;
-	int CMD;
-    unsigned char buffer[sizeof(CMD)];
-    zmq::context_t context(1);
-    zmq::socket_t socket(context,ZMQ_REP);
-    
-	cout<< "[Server] Socket is OPEN on " << this->CLIENT_ADDR << endl;
-    socket.bind(this->CLIENT_ADDR.c_str());
-
-	while (true) 
-	{
-		cout<< "[Server] Waiting for a Command..." <<endl;
-        socket.recv(buffer,sizeof(CMD));
-		
-        memcpy(&CMD, buffer, sizeof(CMD));
-		cout<< "[Server] Command RECEIVED!" <<endl;
-		
-        socket.send((unsigned char*)CMD_SUCCESS,sizeof(CMD_SUCCESS));
-        
-        switch(CMD)
-        {
-			case CMD_SEND_ORAM_TREE: //inherent
-				cout<<endl;
-				cout << "=================================================================" << endl;
-				cout<< "[Server] Receiving ORAM Data..." <<endl;
-				cout << "=================================================================" << endl;
-				this->recvORAMTree(socket);
-				cout << "=================================================================" << endl;
-				cout<< "[Server] ORAM Data RECEIVED!" <<endl;
-				cout << "=================================================================" << endl;
-				cout<<endl;
-				break;
-			case CMD_REQUEST_BLOCK: //inherent
-				cout<<endl;
-				cout << "=================================================================" << endl;
-				cout<< "[Server] Receiving Logical Vector..." <<endl;
-				cout << "=================================================================" << endl;
-				this->retrieve(socket);
-				cout << "=================================================================" << endl;
-				cout<< "[Server] Block Share SENT" <<endl;
-				cout << "=================================================================" << endl;
-				cout<<endl;
-				break;
-          case CMD_SEND_EVICT:  //specific
-				cout<<endl;
-				cout << "=================================================================" << endl;
-				cout<< "Receiving Eviction Matrix..." <<endl;
-				cout << "=================================================================" << endl;
-				this->evict(socket);
-				cout << "=================================================================" << endl;
-				cout<< "[Server] EVICTION and DEGREE REDUCTION DONE!" <<endl;
-				cout << "=================================================================" << endl;
-				cout<<endl;
-				break;
-			default:
-				break;
-		}
-	}
-	
-	ret = 0;
-    return ret;
-}
-
-
-/**
- * Function Name: recvORAMTree //inherent
- *
- * Description: Distributes generated and shared ORAM buckets to servers over network
- * 
- * @return 0 if successful
- */  
- 
-int ServerKaryS3ORAMC::recvORAMTree(zmq::socket_t& socket)
-{
-    int ret = 1;
-    for(int i = 0 ; i < NUM_NODES;i++)
-    {
-        socket.recv(bucket_buffer,BUCKET_SIZE*sizeof(TYPE_DATA)*DATA_CHUNKS,0);
-        string path = rootPath + to_string(serverNo) + "/" + to_string(i);
-    
-        FILE* file_out = NULL;
-        if((file_out = fopen(path.c_str(),"wb+")) == NULL)
-        {
-            cout<< "	[recvORAMTree] File Cannot be Opened!!" <<endl;
-            exit(0);
-        }
-        fwrite(bucket_buffer, 1, BUCKET_SIZE*sizeof(TYPE_DATA)*DATA_CHUNKS, file_out);
-        fclose(file_out);
-        socket.send((unsigned char*)CMD_SUCCESS,sizeof(CMD_SUCCESS),0);
-       
-    }
-	 cout<< "	[recvORAMTree] ACK is SENT!" <<endl;
-	
-	ret = 0;
-    return ret ;
-}
 
 
 /**
@@ -323,7 +173,7 @@ int ServerKaryS3ORAMC::retrieve(zmq::socket_t& socket)
             endIdx = startIdx+step;
             
         loadData_args[i] = THREAD_LOADDATA(this->serverNo, startIdx, endIdx, this->dot_product_vector, fullPathIdx,H+1);
-        pthread_create(&thread_compute[0][i], NULL, &ServerKaryS3ORAMC::thread_loadRetrievalData_func, (void*)&loadData_args[i]);
+        pthread_create(&thread_compute_coram[0][i], NULL, &ServerS3ORAM::thread_loadRetrievalData_func, (void*)&loadData_args[i]);
         
         /*cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -333,7 +183,7 @@ int ServerKaryS3ORAMC::retrieve(zmq::socket_t& socket)
     
     for(int i = 0, startIdx = 0 ; i < numThreads , startIdx < DATA_CHUNKS; i ++, startIdx+=step)
     {
-        pthread_join(thread_compute[0][i],NULL);
+        pthread_join(thread_compute_coram[0][i],NULL);
     }
     end = time_now;
 	long load_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();
@@ -353,7 +203,7 @@ int ServerKaryS3ORAMC::retrieve(zmq::socket_t& socket)
             endIdx = startIdx+step;
 			
         dotProduct_args[i] = THREAD_COMPUTATION( startIdx, endIdx, this->dot_product_vector, sharedVector, (H+1)*BUCKET_SIZE, sumBlock);
-        pthread_create(&thread_compute[0][i], NULL, &ServerKaryS3ORAMC::thread_dotProduct_func, (void*)&dotProduct_args[i]);
+        pthread_create(&thread_compute_coram[0][i], NULL, &ServerS3ORAM::thread_dotProduct_func, (void*)&dotProduct_args[i]);
 		
         /*cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -363,7 +213,7 @@ int ServerKaryS3ORAMC::retrieve(zmq::socket_t& socket)
     
     for(int i = 0, startIdx = 0 ; i < numThreads , startIdx < DATA_CHUNKS; i ++, startIdx+=step)
     {
-        pthread_join(thread_compute[0][i],NULL);
+        pthread_join(thread_compute_coram[0][i],NULL);
     }
     
     end = time_now;
@@ -420,13 +270,13 @@ int ServerKaryS3ORAMC::evict(zmq::socket_t& socket)
         //holdBlock
         for(int i = 0  ; i < DATA_CHUNKS; i++)
         {
-            memcpy(this->cross_product_vector[e][i],&evict_buffer_in[currBufferIdx +  i*sizeof(TYPE_DATA)],sizeof(TYPE_DATA));
+            memcpy(this->cross_product_vector_coram[e][i],&evict_buffer_in[currBufferIdx +  i*sizeof(TYPE_DATA)],sizeof(TYPE_DATA));
         }
         for (TYPE_INDEX y = 0 ; y < H+1 ; y++)
         {
             for (TYPE_INDEX i = 0 ; i < BUCKET_SIZE+1; i++)
             {
-                memcpy(this->evictMatrix[e][y][i], &evict_buffer_in[currBufferIdx + (sizeof(TYPE_DATA)*DATA_CHUNKS) + y*evictMatSize*sizeof(TYPE_DATA) + i*(BUCKET_SIZE+1)*sizeof(TYPE_DATA)], (BUCKET_SIZE+1)*sizeof(TYPE_DATA));
+                memcpy(this->evictMatrix_coram[e][y][i], &evict_buffer_in[currBufferIdx + (sizeof(TYPE_DATA)*DATA_CHUNKS) + y*evictMatSize*sizeof(TYPE_DATA) + i*(BUCKET_SIZE+1)*sizeof(TYPE_DATA)], (BUCKET_SIZE+1)*sizeof(TYPE_DATA));
             }
         }
         currBufferIdx += (sizeof(TYPE_DATA)*DATA_CHUNKS + (H+1)*evictMatSize*sizeof(TYPE_DATA));
@@ -496,8 +346,8 @@ start:
                     endIdx = DATA_CHUNKS;
                 else
                     endIdx = startIdx+step;
-                loadData_args[e][i] = THREAD_LOADDATA(this->serverNo, startIdx, endIdx, this->cross_product_vector[e], fullEvictPathIdx[e][h]);
-                pthread_create(&thread_compute[e][i], NULL, &ServerKaryS3ORAMC::thread_readBucket_func, (void*)&loadData_args[e][i]);
+                loadData_args[e][i] = THREAD_LOADDATA(this->serverNo, startIdx, endIdx, this->cross_product_vector_coram[e], fullEvictPathIdx[e][h]);
+                pthread_create(&thread_compute_coram[e][i], NULL, &ServerKaryS3ORAMC::thread_readBucket_func, (void*)&loadData_args[e][i]);
                 
                 /*cpu_set_t cpuset;
                 CPU_ZERO(&cpuset);
@@ -509,7 +359,7 @@ start:
         {
             for(int i = 0, startIdx = 0 ; i < numThreads , startIdx < DATA_CHUNKS; i ++, startIdx+=step)
             {
-                pthread_join(thread_compute[e][i],NULL);
+                pthread_join(thread_compute_coram[e][i],NULL);
             }
         }
         end = time_now;
@@ -539,12 +389,12 @@ start:
             {
                 for(TYPE_INDEX j = 0; j < BUCKET_SIZE+1; j++)
                 {
-                    ORAM.createShares(this->BUCKET_DATA[e][u][j], shares); // EACH SERVER CALCULATES AND DISTRIBUTES SHARES
+                    ORAM.createShares(this->BUCKET_DATA_coram[e][u][j], shares); // EACH SERVER CALCULATES AND DISTRIBUTES SHARES
                     for(TYPE_INDEX k = 0; k < NUM_SERVERS; k++)
                     {
                         if (k == this->serverNo)
                         {
-                            ownShares[e][this->serverNo][u][j] = shares[k];
+                            ownShares_coram[e][this->serverNo][u][j] = shares[k];
                         }
                         else
                         {
@@ -597,7 +447,7 @@ start:
                     }
                     else
                     {
-                        memcpy(ownShares[e][k][u], &shares_buffer_in[m][currBufferIdx + u*(BUCKET_SIZE+1)*sizeof(TYPE_DATA)], (BUCKET_SIZE+1)*sizeof(TYPE_DATA));   
+                        memcpy(ownShares_coram[e][k][u], &shares_buffer_in[m][currBufferIdx + u*(BUCKET_SIZE+1)*sizeof(TYPE_DATA)], (BUCKET_SIZE+1)*sizeof(TYPE_DATA));   
                         m++;
                     }
                 }
@@ -616,7 +466,7 @@ start:
                     sum = 0;
                     for (TYPE_INDEX l = 0; l < NUM_SERVERS; l++)
                     {
-                        sum = (sum + Utils::mulmod(vandermonde[l], ownShares[e][l][u][j])) % P;
+                        sum = (sum + Utils::mulmod(vandermonde[l], ownShares_coram[e][l][u][j])) % P;
                     }
 
                     memcpy(&bucket_buffer[(u*(BUCKET_SIZE+1) + j)*sizeof(TYPE_DATA)], &sum, sizeof(TYPE_DATA));
@@ -641,7 +491,7 @@ start:
             {
                 fwrite(&bucket_buffer[iter], 1, BUCKET_SIZE*sizeof(TYPE_DATA), file_out);
                 iter += (BUCKET_SIZE*sizeof(TYPE_DATA));
-                memcpy(this->cross_product_vector[e][i],&bucket_buffer[iter],sizeof(TYPE_DATA));
+                memcpy(this->cross_product_vector_coram[e][i],&bucket_buffer[iter],sizeof(TYPE_DATA));
                 iter += sizeof(TYPE_DATA);
             }
             
@@ -693,8 +543,8 @@ int ServerKaryS3ORAMC::multEvictTriplet(int level, int es, int ee)
             else
                 endIdx = startIdx+step;
         
-            crossProduct_args[e][i] = THREAD_COMPUTATION(startIdx, endIdx, this->cross_product_vector[e], BUCKET_SIZE+1, evictMatrix[e][level], this->BUCKET_DATA[e] );
-            pthread_create(&thread_compute[e][i], NULL, &ServerKaryS3ORAMC::thread_crossProduct_func, (void*)&crossProduct_args[e][i]);
+            crossProduct_args[e][i] = THREAD_COMPUTATION(startIdx, endIdx, this->cross_product_vector_coram[e], BUCKET_SIZE+1, BUCKET_SIZE+1, evictMatrix_coram[e][level], this->BUCKET_DATA_coram[e] );
+            pthread_create(&thread_compute_coram[e][i], NULL, &ServerS3ORAM::thread_crossProduct_func, (void*)&crossProduct_args[e][i]);
             
             /*cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
@@ -706,157 +556,12 @@ int ServerKaryS3ORAMC::multEvictTriplet(int level, int es, int ee)
     {
         for(int i  = 0 ; i <numThreads ; i++)
         {
-            pthread_join(thread_compute[e][i],NULL);
+            pthread_join(thread_compute_coram[e][i],NULL);
         }
 	}
 	return 0;
 }
 
-
-/**
- * Function Name: thread_socket_func & send & recv
- *
- * Description: Generic threaded socket functions for send and receive operations
- * 
- * @return 0 if successful
- */  
-void *ServerKaryS3ORAMC::thread_socket_func(void* args)
-{
-    struct_socket* opt = (struct_socket*) args;
-	
-	if(opt->isSend)
-	{
-		auto start = time_now;
-		send(opt->peer_idx, opt->data_out, opt->data_out_size);
-		auto end = time_now;
-		if(thread_max < std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count())
-			thread_max = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();
-	}
-	else
-	{
-		recv(opt->peer_idx, opt->data_in, opt->data_in_size);
-	}
-    pthread_exit((void*)opt);
-}
-int ServerKaryS3ORAMC::send(int peer_idx, unsigned char* input, size_t inputSize)
-{
-	unsigned char buffer_in[sizeof(CMD_SUCCESS)];
-	
-    try
-    {
-		//cout<< "	[ThreadedSocket] Sending to Server" <<  << endl;
-		socket_send[peer_idx]->send (input, inputSize);
-		cout<< "	[ThreadedSocket] Data SENT!" << peer_idx << endl;
-        
-        socket_send[peer_idx]->recv(buffer_in, sizeof(CMD_SUCCESS));
-        cout<< "	[ThreadedSocket] ACK RECEIVED!" << peer_idx << endl;
-    }
-    catch (exception &ex)
-    {
-        goto exit;
-    }
-
-exit:
-	//socket.disconnect(ADDR.c_str());
-	//socket.close();
-	return 0;
-}
-int ServerKaryS3ORAMC::recv(int peer_idx, unsigned char* output, size_t outputSize)
-{
-	try
-    {
-		//cout<< "	[ThreadedSocket] Waiting Client on " << ADDR << endl;
-		socket_recv[peer_idx]->recv (output, outputSize);
-		cout<< "	[ThreadedSocket] Data RECEIVED! " << peer_idx <<endl;
-        
-        socket_recv[peer_idx]->send((unsigned char*)CMD_SUCCESS,sizeof(CMD_SUCCESS));
-        cout<< "	[ThreadedSocket] ACK SENT! "  << peer_idx<<endl;
-    }
-    catch (exception &ex)
-    {
-        cout<<"Socket error!";
-        goto exit;
-    }
-    
-exit:
-	//socket.close();
-	return 0;
-}
-
-
-/**
- * Function Name: thread_dotProduct_func
- *
- * Description: Threaded dot-product operation 
- * 
- */  
-void *ServerKaryS3ORAMC::thread_dotProduct_func(void* args)
-{
-    THREAD_COMPUTATION* opt = (THREAD_COMPUTATION*) args;
-  
-    //std::cout << " CPU # " << sched_getcpu() << "\n";
-    for(int k = opt->startIdx; k < opt->endIdx; k++)
-    {
-        opt->dot_product_output[k] = InnerProd_LL(opt->data_vector[k],opt->select_vector,opt->vector_length,P,zz_p::ll_red_struct());
-    }
-}
-
-
-/**
- * Function Name: thread_crossProduct_func //specific but can make to be inherent by putting size into arg param
- *
- * Description: Threaded cross-product operation 
- * 
- */  
-void *ServerKaryS3ORAMC::thread_crossProduct_func(void* args)
-{
-    THREAD_COMPUTATION* opt = (THREAD_COMPUTATION*) args;
-    
-    for(int l = opt->startIdx ; l < opt->endIdx; l++) //fix this later
-    {
-        for(int k = 0 ; k < BUCKET_SIZE+1; k++)
-        {
-            opt->cross_product_output[l][k] = InnerProd_LL(opt->data_vector_triplet[l],opt->evict_matrix[k],opt->vector_length,P,zz_p::ll_red_struct());
-        }
-    }
-    
-    pthread_exit((void*)opt);
-}
-
-
-/**
- * Function Name: thread_loadRetrievalData_func
- *
- * Description: Threaded load function to read buckets in a path from disk storage
- * 
- */  
-void* ServerKaryS3ORAMC::thread_loadRetrievalData_func(void* args)
-{
-    THREAD_LOADDATA* opt = (THREAD_LOADDATA*) args;
-    
-    unsigned long int load_time = 0;
-    FILE* file_in = NULL;
-    string path;
-    
-    for(int i = 0; i < opt->fullPathIdx_length; i++)
-    {
-        file_in = NULL;
-        path = rootPath + to_string(opt->serverNo) + "/" + to_string(opt->fullPathIdx[i]);
-        if((file_in = fopen(path.c_str(),"rb")) == NULL){
-            cout<< "	[SendBlock] File cannot be opened!!" <<endl;
-            exit;
-        }
-        fseek(file_in,BUCKET_SIZE*(opt->startIdx)*sizeof(TYPE_DATA),SEEK_SET);
-        for (int k = opt->startIdx ; k < opt->endIdx; k++)
-        {
-            for(int j = 0 ; j < BUCKET_SIZE; j ++)
-            {
-                fread(&opt->data_vector[k][i*BUCKET_SIZE+j],1,sizeof(TYPE_DATA),file_in);
-            }
-        }
-        fclose(file_in);
-    }
-}
 
 
 /**

@@ -8,6 +8,10 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="ServerS3ORAM.cpp"/>
+    <File Name="ServerS3ORAM.hpp"/>
+    <File Name="ClientS3ORAM.cpp"/>
+    <File Name="ClientS3ORAM.hpp"/>
     <File Name="ServerKaryS3ORAMO.hpp"/>
     <File Name="ServerKaryS3ORAMO.cpp"/>
     <File Name="ServerBinaryS3ORAMO.hpp"/>

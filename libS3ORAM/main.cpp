@@ -1,5 +1,10 @@
 #include <iostream>
 #include "config.h"
+#include "ClientS3ORAM.hpp"
+#include "ServerS3ORAM.hpp"
+
+
+
 #if defined(CORAM_LAYOUT)
         #include "ServerKaryS3ORAMC.hpp"
         #include "ClientKaryS3ORAMC.hpp"
@@ -42,7 +47,6 @@ int main(int argc, char **argv)
         system(mkdir_sharedData.c_str());
     }
 
-
     int choice;
     zz_p::init(P);
     //set random seed for NTL
@@ -69,29 +73,33 @@ int main(int argc, char **argv)
 		}while(selectedThreads>nthreads);
         
 #if defined(CORAM_LAYOUT)
-        ServerKaryS3ORAMC*  server = new ServerKaryS3ORAMC(serverNo-1,selectedThreads);
+        ServerS3ORAM*  server = new ServerKaryS3ORAMC(serverNo-1,selectedThreads);
 #else
     #if defined(TRIPLET_EVICTION)
-        ServerBinaryS3ORAMO*  server = new ServerBinaryS3ORAMO(serverNo-1,selectedThreads);
+        ServerS3ORAM*  server = new ServerBinaryS3ORAMO(serverNo-1,selectedThreads);
     #else
-       ServerKaryS3ORAMO*  server = new ServerKaryS3ORAMO(serverNo-1,selectedThreads);
+        ServerS3ORAM* server = new ServerKaryS3ORAMO(serverNo-1,selectedThreads);
     #endif
 #endif
-
+        
+        
+        
 		server->start();
 	}
 	else if (choice == 1)
 	{
-        #if defined(CORAM_LAYOUT)
+        
+#if defined(CORAM_LAYOUT)
         ClientKaryS3ORAMC*  client = new ClientKaryS3ORAMC();
 #else
     #if defined(TRIPLET_EVICTION)
-        ClientBinaryS3ORAMO*  client = new ClientBinaryS3ORAMO();
+        ClientS3ORAM* client = new ClientBinaryS3ORAMO();
     #else
-       ClientKaryS3ORAMO*  client = new ClientKaryS3ORAMO();
+        ClientS3ORAM* client = new ClientKaryS3ORAMO();
     #endif
 #endif
 		
+        
         int access, start;
 		char response = ' ';
 		int random_access;

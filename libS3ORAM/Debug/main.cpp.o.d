@@ -1,17 +1,22 @@
-Debug/main.cpp.o: main.cpp config.h ServerKaryS3ORAMO.hpp zmq.hpp \
- ClientKaryS3ORAMO.hpp zmq.hpp struct_socket.h Utils.hpp S3ORAM.hpp
+Debug/main.cpp.o: main.cpp config.h ClientS3ORAM.hpp zmq.hpp \
+ struct_socket.h ServerS3ORAM.hpp zmq.hpp ServerKaryS3ORAMC.hpp \
+ ClientKaryS3ORAMC.hpp Utils.hpp S3ORAM.hpp
 
 config.h:
 
-ServerKaryS3ORAMO.hpp:
-
-zmq.hpp:
-
-ClientKaryS3ORAMO.hpp:
+ClientS3ORAM.hpp:
 
 zmq.hpp:
 
 struct_socket.h:
+
+ServerS3ORAM.hpp:
+
+zmq.hpp:
+
+ServerKaryS3ORAMC.hpp:
+
+ClientKaryS3ORAMC.hpp:
 
 Utils.hpp:
 
