@@ -13,7 +13,7 @@ This project is built on CodeLite IDE (link: http://codelite.org). It is recomme
 
 # Required Libraries
 1. NTL v9.10.0 (download link: http://www.shoup.net/ntl/download.html)
-psprt
+
 2. ZeroMQ (download link: http://zeromq.org/intro:get-the-software)
 
 # Configuration
