@@ -1,4 +1,4 @@
-# I have merged this repository to the original S3ORAM repository under the new branch. Check it out [here](https://github.com/thanghoang/S3ORAM/tree/Extension). This repository will not be updated any more.
+## I have merged this repository to the [original S3ORAM repository](https://github.com/thanghoang/S3ORAM/tree/master) under the new branch. Check it out [here](https://github.com/thanghoang/S3ORAM/tree/Extension). This repository will not be updated any more.
 
 ----- 
 # libS3ORAM
