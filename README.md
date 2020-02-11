@@ -1,5 +1,11 @@
+# I have merged this repository to the original S3ORAM repository under the new branch. Check it out [here](https://github.com/thanghoang/S3ORAM/tree/Extension). This repository will not be updated any more.
+
+----- 
 # libS3ORAM
 Implementation of libS3ORAM framework, an extension of S3ORAM scheme in CCS'17 that supports k-ary tree and Circuit-ORAM layout. The full paper is currently under review, which will be available soon. 
+
+
+
 
 This repository is just open for review purpose. We will merge this with our original S3ORAM repo (http://github.com/thanghoang/S3ORAM) after the review is complete! The code is not fully well-organized, we will update it soon.
 
